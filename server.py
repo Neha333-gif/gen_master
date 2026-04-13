@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import subprocess
@@ -201,35 +202,8 @@ async def auth_trigger(request: Request, platform: str = "mobile"):
         f"prompt=consent"
     )
     
-    # Return a "Stealth Landing" page with a manual button. 
-    # This prevents Google from blocking it as an "Automated Redirect".
-    return f"""
-    <html>
-    <head>
-        <title>Google Authentication</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f7f9fc; }}
-            .card {{ background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; max-width: 320px; }}
-            h2 {{ color: #1a1f36; margin: 0 0 1rem; font-size: 1.5rem; }}
-            p {{ color: #4f566b; margin-bottom: 2rem; line-height: 1.5; }}
-            .btn {{ 
-                display: block; background: #4285F4; color: white; padding: 12px 24px; 
-                text-decoration: none; border-radius: 8px; font-weight: 600; 
-                transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }}
-            .btn:hover {{ background: #357ae8; }}
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h2>Secure Login</h2>
-            <p>Click the button below to sign in to GenAI Masterclass with your Google account.</p>
-            <a href="{auth_url}" class="btn">Continue to Google</a>
-        </div>
-    </body>
-    </html>
-    """
+    # Directly redirect to Google — no intermediate page needed
+    return RedirectResponse(url=auth_url)
 
 @app.get("/api/google-login")
 async def google_callback(code: str = None, state: str = None):
