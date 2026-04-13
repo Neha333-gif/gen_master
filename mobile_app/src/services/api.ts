@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'https://genai-backend-m0e0.onrender.com';
+const API_BASE = 'https://gen-master.onrender.com';
 
 export const api = axios.create({
   baseURL: API_BASE,
@@ -24,7 +24,7 @@ export const authService = {
   },
   
   googleLoginTrigger: (platform: string = 'mobile') => {
-    return `https://genai-backend-m0e0.onrender.com/api/auth-trigger?platform=${platform}`;
+    return `https://gen-master.onrender.com/api/auth-trigger?platform=${platform}`;
   }
 };
 

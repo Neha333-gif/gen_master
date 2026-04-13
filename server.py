@@ -188,7 +188,7 @@ async def auth_trigger(request: Request, platform: str = "mobile"):
     state = json.dumps({"platform": platform})
     encoded_state = base64.urlsafe_b64encode(state.encode()).decode()
     
-    redirect_uri = "https://genai-backend-m0e0.onrender.com/api/google-login"
+    redirect_uri = "https://gen-master.onrender.com/api/google-login"
     scope = "email profile openid"
     auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth?"
@@ -240,7 +240,7 @@ async def google_callback(code: str = None, state: str = None):
     # Swapping the Code for an ID Token securely on the server
     import requests
     token_url = "https://oauth2.googleapis.com/token"
-    redirect_uri = "https://genai-backend-m0e0.onrender.com/api/google-login"
+    redirect_uri = "https://gen-master.onrender.com/api/google-login"
     
     data = {
         "code": code,
