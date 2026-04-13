@@ -1,0 +1,24 @@
+{
+  "appId": "com.genai.masterclass",
+  "appName": "GenAI Masterclass",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "allowNavigation": [
+      "192.168.1.49:8000",
+      "genai-backend-m0e0.onrender.com",
+      "accounts.google.com",
+      "*.googleapis.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}
