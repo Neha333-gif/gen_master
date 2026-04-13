@@ -27,47 +27,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handleUrl = (url: string) => {
       if (!url) return;
-      
-      // Manual parsing for fragments, as ParsedURL might not expose it directly in all versions
       const fragmentIndex = url.indexOf('#');
       if (fragmentIndex !== -1) {
         const fragment = url.substring(fragmentIndex + 1);
         const params = new URLSearchParams(fragment);
         const token = params.get('id_token');
         if (token) {
-          console.log('Detected token from link');
           login(token);
         }
       }
     };
 
-    // Handle initial URL if app was opened via link
-    Linking.getInitialURL().then((url) => {
-      if (url) handleUrl(url);
-    });
+    // Mobile: Handle deep links
+    Linking.getInitialURL().then((url) => { if (url) handleUrl(url); });
+    const subscription = Linking.addEventListener('url', (event) => handleUrl(event.url));
 
-    // Web-specific: Check for token in URL fragment on initial load
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const fragment = window.location.hash.substring(1);
-      const params = new URLSearchParams(fragment);
-      const token = params.get('id_token');
-      if (token) {
-        console.log('Detected token from Web fragment');
-        login(token);
-        // Clear the fragment from the URL for security/cleanliness
-        window.history.replaceState({}, document.title, window.location.pathname);
+    // Web: Listen for postMessage from the Google login popup
+    const handlePostMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data?.token) {
+        console.log('Received token from popup');
+        login(event.data.token);
       }
-    }
+    };
 
-    // Listen for incoming URLs while app is open
-    const subscription = Linking.addEventListener('url', (event) => {
-      handleUrl(event.url);
-    });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('message', handlePostMessage);
+    }
 
     return () => {
       subscription.remove();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('message', handlePostMessage);
+      }
     };
   }, []);
+
+
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout }}>

@@ -241,14 +241,10 @@ async def google_callback(code: str = None, state: str = None):
             platform = decoded_state.get("platform", "mobile")
         except:
             pass
-            
-    # Determine the redirect URL based on platform
-    if platform == "web":
-        final_redirect = f"http://localhost:8081/#id_token={token}"
-    else:
-        final_redirect = f"genai-app://login#id_token={token}"
 
-    return f"""
+    if platform == "web":
+        # Use postMessage so the popup can pass the token to the parent window
+        return f"""
     <html>
     <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
         <div style="text-align: center;">
@@ -256,7 +252,26 @@ async def google_callback(code: str = None, state: str = None):
             <p>Verification successful! Returning you to your Dashboard.</p>
         </div>
         <script>
-            // Pass the token back to the app using our custom scheme or direct web hash
+            if (window.opener) {{
+                window.opener.postMessage({{ type: 'GOOGLE_LOGIN_SUCCESS', token: '{token}' }}, '*');
+                window.close();
+            }} else {{
+                window.location.href = 'http://localhost:8081/#id_token={token}';
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    else:
+        final_redirect = f"genai-app://login#id_token={token}"
+        return f"""
+    <html>
+    <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <div style="text-align: center;">
+            <h2>Signing you in...</h2>
+            <p>Verification successful! Returning you to your Dashboard.</p>
+        </div>
+        <script>
             window.location.href = "{final_redirect}";
         </script>
     </body>

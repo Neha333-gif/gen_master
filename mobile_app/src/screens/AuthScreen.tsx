@@ -23,15 +23,24 @@ export default function AuthScreen() {
   const handleGoogleSignIn = async () => {
     const platform = Platform.OS === 'web' ? 'web' : 'mobile';
     const url = authService.googleLoginTrigger(platform);
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        alert("Don't know how to open this URL: " + url);
+
+    if (Platform.OS === 'web') {
+      // Open a popup for Google login on web (standard OAuth pattern)
+      const popup = window.open(url, 'googleLogin', 'width=500,height=650,scrollbars=yes,resizable=yes');
+      if (!popup) {
+        alert('Popup blocked! Please allow popups for localhost:8081 and try again.');
       }
-    } catch (error) {
-      console.error('An error occurred', error);
+      // The postMessage listener in AuthContext will handle the response
+    } else {
+      // Deep link for mobile
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        }
+      } catch (error) {
+        console.error('An error occurred', error);
+      }
     }
   };
 
