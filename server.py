@@ -175,8 +175,8 @@ async def execute_code(req: CodeExecutionRequest, user_info=Depends(verify_token
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-@app.get("/api/google-callback")
-async def google_callback():
+@app.get("/api/google-login")
+async def google_login():
     # This page just serves a small script to pass the token back to the app
     # After Google redirects here with #access_token=... in the hash
     return """
