@@ -175,6 +175,22 @@ async def execute_code(req: CodeExecutionRequest, user_info=Depends(verify_token
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
+@app.get("/api/auth-trigger")
+async def auth_trigger():
+    # Redirect directly to Google Login from the server
+    # This makes Google think the request is coming from a website (Render), not an app
+    redirect_uri = "https://genai-backend-m0e0.onrender.com/api/google-login"
+    scope = "email profile openid"
+    auth_url = (
+        f"https://accounts.google.com/o/oauth2/v2/auth?"
+        f"client_id={GOOGLE_CLIENT_ID}&"
+        f"redirect_uri={redirect_uri}&"
+        f"response_type=token&"
+        f"scope={scope}"
+    )
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(auth_url)
+
 @app.get("/api/google-login")
 async def google_login():
     # This page just serves a small script to pass the token back to the app

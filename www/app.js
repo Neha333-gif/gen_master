@@ -2,6 +2,7 @@
 // In browser: uses localhost. On Android/iOS device: uses your computer's local network IP.
 const API_BASE = 'https://genai-backend-m0e0.onrender.com';
 const GOOGLE_REDIRECT_URI = 'https://genai-backend-m0e0.onrender.com/api/google-login';
+const GOOGLE_CLIENT_ID = '666176576272-asl6e1jn8p3nvs2risittbac5sd655lp.apps.googleusercontent.com';
 
 // Trigger Guest Sign-In
 window.triggerGuestSignIn = async function() {
@@ -40,9 +41,17 @@ window.triggerGoogleSignIn = function() {
         const scope = "email profile openid";
         const response_type = "token"; // We'll use implicit flow for simplicity in mobile
         
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=${response_type}&scope=${encodeURIComponent(scope)}`;
+        // Step 1: Open our Render "Trigger" URL instead of Google directly
+        // This makes Google see the request coming from Render (Trusted Domain)
+        const triggerUrl = `${API_BASE}/api/auth-trigger`;
         
-        window.location.href = authUrl;
+        const { Browser } = typeof Capacitor !== 'undefined' ? Capacitor.Plugins : { Browser: null };
+        if (Browser) {
+            Browser.open({ url: triggerUrl });
+        } else {
+            // Fallback for browser testing
+            window.location.href = triggerUrl;
+        }
     }
 };
 
