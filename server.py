@@ -189,7 +189,7 @@ async def google_login():
         <script>
             // Take whatever hash Google sent (containing the token) and pass it back to the app
             const hash = window.location.hash;
-            window.location.href = "http://localhost/" + hash;
+            window.location.href = "genai-app://login" + hash;
         </script>
     </body>
     </html>

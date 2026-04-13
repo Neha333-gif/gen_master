@@ -415,30 +415,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // [NEW] Check for Google OAuth Token in the URL hash (Redirect Flow)
     const hash = window.location.hash;
     if (hash && (hash.includes('access_token=') || hash.includes('id_token='))) {
-        console.log("OAuth token detected in hash, processing...");
-        const params = new URLSearchParams(hash.substring(1));
+        processToken(hash);
+    }
+
+    function processToken(hashStr) {
+        console.log("OAuth token detected, processing...");
+        const params = new URLSearchParams(hashStr.substring(hashStr.indexOf('#') + 1));
         const token = params.get('id_token') || params.get('access_token');
         
         if (token) {
             localStorage.setItem('auth_token', token);
             window.updateUserProfileUI(token);
             window.navigateTo('screen-dashboard');
-            // Clean up the hash to keep the URL clean
+            // Clean up
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 
-    // [NEW] Check for Redirect Mode credentials in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlCredential = urlParams.get('credential');
-    if (urlCredential) {
-        console.log("Redirect credential detected, processing sign-in...");
-        window.handleGoogleCallback({ credential: urlCredential });
-        // Clean up URL parameters without reloading
-        window.history.replaceState({}, document.title, window.location.pathname);
+    // [NEW] Handle App URL Opens (Special Scheme: genai-app://)
+    try {
+        const { App } = typeof Capacitor !== 'undefined' ? Capacitor.Plugins : { App: null };
+        if (App) {
+            App.addListener('appUrlOpen', (data) => {
+                console.log('App opened with URL:', data.url);
+                if (data.url.includes('genai-app://')) {
+                    const hashPart = data.url.split('#')[1];
+                    if (hashPart) {
+                        processToken('#' + hashPart);
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.error("Capacitor App plugin listener error:", e);
     }
-
-    // Standard cleanup or initialization
 });
 
 window.switchTerminalTab = function(tabName) {
