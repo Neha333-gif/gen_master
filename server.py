@@ -177,11 +177,16 @@ async def execute_code(req: CodeExecutionRequest, user_info=Depends(verify_token
             os.remove(temp_file_path)
 
 @app.get("/api/auth-trigger")
-async def auth_trigger(request: Request):
+async def auth_trigger(request: Request, platform: str = "mobile"):
     # Log the User-Agent to help troubleshoot if Google still blocks it
     user_agent = request.headers.get("user-agent")
     print(f"--- LOGIN TRIGGER ATTEMPT ---")
     print(f"USER-AGENT: {user_agent}")
+    print(f"PLATFORM: {platform}")
+    
+    # Store the platform in the OAuth state parameter so Google returns it to us
+    state = json.dumps({"platform": platform})
+    encoded_state = base64.urlsafe_b64encode(state.encode()).decode()
     
     redirect_uri = "https://genai-backend-m0e0.onrender.com/api/google-login"
     scope = "email profile openid"
@@ -191,6 +196,7 @@ async def auth_trigger(request: Request):
         f"redirect_uri={redirect_uri}&"
         f"response_type=code&"
         f"scope={scope}&"
+        f"state={encoded_state}&"
         f"access_type=offline&"
         f"prompt=consent"
     )
@@ -226,7 +232,8 @@ async def auth_trigger(request: Request):
     """
 
 @app.get("/api/google-login")
-async def google_callback(code: str = None):
+async def google_callback(code: str = None, state: str = None):
+    state_param = state
     if not code:
         raise HTTPException(status_code=400, detail="Authorization code missing from Google")
 
@@ -252,6 +259,21 @@ async def google_callback(code: str = None):
 
     token = token_data["id_token"]
 
+    # Decode platform from state
+    platform = "mobile"
+    if state_param:
+        try:
+            decoded_state = json.loads(base64.urlsafe_b64decode(state_param.encode()).decode())
+            platform = decoded_state.get("platform", "mobile")
+        except:
+            pass
+            
+    # Determine the redirect URL based on platform
+    if platform == "web":
+        final_redirect = f"http://localhost:8081/#id_token={token}"
+    else:
+        final_redirect = f"genai-app://login#id_token={token}"
+
     return f"""
     <html>
     <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
@@ -260,8 +282,8 @@ async def google_callback(code: str = None):
             <p>Verification successful! Returning you to your Dashboard.</p>
         </div>
         <script>
-            // Pass the token back to the app using our custom scheme
-            window.location.href = "genai-app://login#id_token=" + "{token}";
+            // Pass the token back to the app using our custom scheme or direct web hash
+            window.location.href = "{final_redirect}";
         </script>
     </body>
     </html>
