@@ -50,6 +50,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"status": "GenAI Masterclass Backend is Live"}
+
 @app.middleware("http")
 async def add_logging(request, call_next):
     print(f">>> RECEIVED REQUEST: {request.method} {request.url}")

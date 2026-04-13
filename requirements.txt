@@ -1,8 +1,6 @@
 fastapi
 uvicorn
 pydantic
-transformers
-torch
-langchain
-langchain_community
-langchain_core
+google-auth
+google-api-python-client
+requests
