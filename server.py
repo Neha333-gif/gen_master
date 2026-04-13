@@ -63,8 +63,9 @@ async def add_logging(request, call_next):
 
 security = HTTPBearer()
 
-# IMPORTANT: Replace this with your actual Google OAuth Client ID!
-GOOGLE_CLIENT_ID = "666176576272-asl6e1jn8p3nvs2risittbac5sd655lp.apps.googleusercontent.com" 
+# Securely load credentials from Environment Variables (set these in Render dashboard)
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "666176576272-asl6e1jn8p3nvs2risittbac5sd655lp.apps.googleusercontent.com")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "PLACEHOLDER_SECRET")
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
@@ -177,35 +178,59 @@ async def execute_code(req: CodeExecutionRequest, user_info=Depends(verify_token
 
 @app.get("/api/auth-trigger")
 async def auth_trigger():
-    # Redirect directly to Google Login from the server
-    # This makes Google think the request is coming from a website (Render), not an app
+    # Redirect to Google Login using "Authorization Code" instead of "Token"
+    # This is the most secure method and bypasses User-Agent blocks
     redirect_uri = "https://genai-backend-m0e0.onrender.com/api/google-login"
     scope = "email profile openid"
     auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth?"
         f"client_id={GOOGLE_CLIENT_ID}&"
         f"redirect_uri={redirect_uri}&"
-        f"response_type=token&"
-        f"scope={scope}"
+        f"response_type=code&"
+        f"scope={scope}&"
+        f"access_type=offline&"
+        f"prompt=consent"
     )
     from fastapi.responses import RedirectResponse
     return RedirectResponse(auth_url)
 
 @app.get("/api/google-login")
-async def google_login():
-    # This page just serves a small script to pass the token back to the app
-    # After Google redirects here with #access_token=... in the hash
-    return """
+async def google_callback(code: str = None):
+    if not code:
+        raise HTTPException(status_code=400, detail="Authorization code missing from Google")
+
+    # Swapping the Code for an ID Token securely on the server
+    import requests
+    token_url = "https://oauth2.googleapis.com/token"
+    redirect_uri = "https://genai-backend-m0e0.onrender.com/api/google-login"
+    
+    data = {
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+    
+    response = requests.post(token_url, data=data)
+    token_data = response.json()
+    
+    if "id_token" not in token_data:
+        print(f"!!! GOOGLE CALLBACK FAILED: {token_data}")
+        return f"<html><body><h2>Authentication failed</h2><p>{token_data.get('error_description', 'Unknown error')}</p></body></html>"
+
+    token = token_data["id_token"]
+
+    return f"""
     <html>
     <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
         <div style="text-align: center;">
             <h2>Signing you in...</h2>
-            <p>Please wait while we return you to the app.</p>
+            <p>Verification successful! Returning you to your Dashboard.</p>
         </div>
         <script>
-            // Take whatever hash Google sent (containing the token) and pass it back to the app
-            const hash = window.location.hash;
-            window.location.href = "genai-app://login" + hash;
+            // Pass the token back to the app using our custom scheme
+            window.location.href = "genai-app://login#id_token=" + "{token}";
         </script>
     </body>
     </html>
