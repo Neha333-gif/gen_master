@@ -9,6 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: gen-last   # 👈 adjust this to the folder containing pubspec.yaml
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,7 +20,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'   # match your local Flutter version
+          flutter-version: '3.19.0'
 
       - name: Install dependencies
         run: flutter pub get
@@ -28,4 +32,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gen-last-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: gen-last/build/app/outputs/flutter-apk/app-release.apk
