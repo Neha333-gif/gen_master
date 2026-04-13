@@ -4,25 +4,28 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import AuthScreen from './src/screens/AuthScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-// import your other screens...
+import EditorScreen from './src/screens/EditorScreen';
+import JourneyScreen from './src/screens/JourneyScreen';
+import QuizScreen from './src/screens/QuizScreen';
+import TheoryScreen from './src/screens/TheoryScreen';
+import TheoryDetailScreen from './src/screens/TheoryDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
 function RootNavigator() {
   const { isAuthenticated } = useAuth();
-
-  // ✅ THIS is what triggers the redirect — whenever isAuthenticated
-  // flips to true, React re-renders and shows Dashboard instead of Auth
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
-        // ── Authenticated screens ──
         <>
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
-          {/* Add EditorScreen, JourneyScreen, QuizScreen, etc. here */}
+          <Stack.Screen name="Editor" component={EditorScreen} />
+          <Stack.Screen name="Journey" component={JourneyScreen} />
+          <Stack.Screen name="Quiz" component={QuizScreen} />
+          <Stack.Screen name="Theory" component={TheoryScreen} />
+          <Stack.Screen name="TheoryDetail" component={TheoryDetailScreen} />
         </>
       ) : (
-        // ── Unauthenticated screens ──
         <Stack.Screen name="Auth" component={AuthScreen} />
       )}
     </Stack.Navigator>
