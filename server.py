@@ -175,7 +175,25 @@ async def execute_code(req: CodeExecutionRequest, user_info=Depends(verify_token
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-if __name__ == "__main__":
+@app.get("/api/google-callback")
+async def google_callback():
+    # This page just serves a small script to pass the token back to the app
+    # After Google redirects here with #access_token=... in the hash
+    return """
+    <html>
+    <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <div style="text-align: center;">
+            <h2>Signing you in...</h2>
+            <p>Please wait while we return you to the app.</p>
+        </div>
+        <script>
+            // Take whatever hash Google sent (containing the token) and pass it back to the app
+            const hash = window.location.hash;
+            window.location.href = "capacitor://localhost/" + hash;
+        </script>
+    </body>
+    </html>
+    """
     import uvicorn
     # Start server on dynamic port for cloud hosting (Render/Heroku)
     port = int(os.environ.get("PORT", 8000))
